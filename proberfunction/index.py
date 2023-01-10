@@ -1,12 +1,13 @@
-import awsapilib
 import boto3
 import json
-import datetime
+from awsapilib import Billing
+import os
+
+billing = Billing(os.environ['AWS_API_LIB_ROLE'])
 
 DEFAULT_RESOURCE_TYPE = 'AWS::::Account'
 
 
-# This generate an evaluation for config
 def build_evaluation(resource_id, compliance_type, event, resource_type=DEFAULT_RESOURCE_TYPE, annotation=None):
     """Form an evaluation as a dictionary. Usually suited to report on scheduled rules.
     Keyword arguments:
@@ -32,18 +33,18 @@ def handler(event, context):
 
     AWS_CONFIG_CLIENT = boto3.client("config")
 
-    if rule_parameters["check"] == "pc-billing-compute-optimizer-enabled":
+    if rule_parameters["check"] == "billing-compute-optimizer-enabled":
         co_client = boto3.client('compute-optimizer')
         co_enrollment_status = co_client.get_enrollment_status()["status"]
         compliance_value = "COMPLIANT" if co_enrollment_status == "Active" else "NON_COMPLIANT"
     elif rule_parameters["check"] == "invoice-by-email":
-        from awsapilib import Billing
-        import os
-        billing = Billing(os.environ['AWS_API_LIB_ROLE'])
         compliance_value = "COMPLIANT" if billing.preferences.pdf_invoice_by_mail else "NON_COMPLIANT"
+    elif rule_parameters["check"] == "billing-iam-access-enabled":
+        compliance_value = "COMPLIANT" if billing.iam_access else "NON_COMPLIANT"
+    elif rule_parameters["check"] == "billing-tax-inheritance-enabled":
+        compliance_value = "COMPLIANT" if billing.tax.inheritance else "NON_COMPLIANT"
     else:
         raise
-
 
     evaluations.append(build_evaluation(event['accountId'], compliance_value, event, resource_type=DEFAULT_RESOURCE_TYPE))
     AWS_CONFIG_CLIENT.put_evaluations(Evaluations=evaluations, ResultToken=event['resultToken'])
