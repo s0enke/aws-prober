@@ -11,36 +11,6 @@ export class ProberStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const rule = new config.ManagedRule(this, 'Prober-RootAccountMFAEnabled', {
-      configRuleName: 'prober-root-account-mfa-enabled',
-      identifier: 'ROOT_ACCOUNT_MFA_ENABLED',
-      description: 'Check if the root account has MFA enabled.',
-    });
-
-    const proberFunction = new lambda.Function(this, 'ProberFunction', {
-      runtime: lambda.Runtime.PYTHON_3_7,
-      code: lambda.Code.fromAsset('proberfunction/'),
-      handler: 'index.handler',
-    });
-
-    new lambda_python.PythonFunction(this, 'ProberFunction2', {
-      entry: 'proberfunction/',
-      runtime: lambda.Runtime.PYTHON_3_9,
-      bundling: {
-        buildArgs: { },
-      },
-    });
-
-    new config.CustomRule(this, 'Prober-InvoiceByEmail', {
-      configRuleName: 'prober-invoice-by-email',
-      description: 'My custom Config rule',
-      inputParameters: {
-        check: 'invoice-by-email',
-      },
-      lambdaFunction: proberFunction,
-      periodic: true,
-    });
-
     const serviceLinkedRoleForAwsConfigIfNotExists = new cr.AwsCustomResource(this, 'ServiceLinkedRoleForAwsConfigIfNotExists', {
       policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
         resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
@@ -96,5 +66,49 @@ export class ProberStack extends cdk.Stack {
       }
     });
     configRecorderIfNotExists.node.addDependency(serviceLinkedRoleForAwsConfigIfNotExists);
+
+
+    const rule = new config.ManagedRule(this, 'Prober-RootAccountMFAEnabled', {
+      configRuleName: 'prober-root-account-mfa-enabled',
+      identifier: 'ROOT_ACCOUNT_MFA_ENABLED',
+      description: 'Check if the root account has MFA enabled.',
+    });
+    rule.node.addDependency(configRecorderIfNotExists);
+
+    const proberFunction =  new lambda_python.PythonFunction(this, 'ProberFunction', {
+      entry: 'proberfunction/',
+      runtime: lambda.Runtime.PYTHON_3_9,
+      timeout: cdk.Duration.seconds(60),
+    });
+
+    const awsApiLibRole = new iam.Role(this, 'AwsApiLibRole', {
+      assumedBy: new iam.ArnPrincipal(proberFunction.role?.roleArn!),
+      inlinePolicies: {
+        'account': new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              actions: ['*'],
+              resources: ['*'],
+              effect: iam.Effect.ALLOW
+            })
+          ]
+        })
+      }
+    });
+    proberFunction.addEnvironment('AWS_API_LIB_ROLE', awsApiLibRole.roleArn);
+
+    const proberInvoiceByEmailRule = new config.CustomRule(this, 'ProberInvoiceByEmailRule', {
+      configRuleName: 'prober-invoice-by-email',
+      description: 'My custom Config rule',
+      inputParameters: {
+        check: 'invoice-by-email',
+      },
+      lambdaFunction: proberFunction,
+      periodic: true,
+    });
+    proberInvoiceByEmailRule.node.addDependency(configRecorderIfNotExists);
+
+
+
   }
 }
