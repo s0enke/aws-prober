@@ -43,6 +43,15 @@ def handler(event, context):
         compliance_value = "COMPLIANT" if billing.iam_access else "NON_COMPLIANT"
     elif rule_parameters["check"] == "billing-tax-inheritance-enabled":
         compliance_value = "COMPLIANT" if billing.tax.inheritance else "NON_COMPLIANT"
+    elif rule_parameters["check"] == "security-account-is-organizations-management-account":
+        # check aws organization whether the account is the management account
+        try:
+            organizations_client = boto3.client('organizations')
+            account_id = organizations_client.describe_account(AccountId=event['accountId'])['Account']['Id']
+            organization_management_account_id = organizations_client.describe_organization()['Organization']['MasterAccountId']
+            compliance_value = "COMPLIANT" if account_id == organization_management_account_id else "NON_COMPLIANT"
+        except:
+            compliance_value = "NON_COMPLIANT"
     else:
         raise
 

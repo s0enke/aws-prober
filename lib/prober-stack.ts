@@ -84,7 +84,7 @@ export class ProberStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(60),
     });
     proberFunction.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['compute-optimizer:GetEnrollmentStatus'],
+      actions: ['compute-optimizer:GetEnrollmentStatus', 'organizations:DescribeAccount', 'organizations:DescribeOrganization'],
       resources: ['*'],
       effect: iam.Effect.ALLOW
       })
@@ -137,6 +137,15 @@ export class ProberStack extends cdk.Stack {
       configRuleName: 'prober-billing-tax-inheritance-enabled',
       inputParameters: {
         check: 'billing-tax-inheritance-enabled',
+      },
+      lambdaFunction: proberFunction,
+      periodic: true,
+    }).node.addDependency(configRecorderIfNotExists);
+
+    new config.CustomRule(this, 'security-account-is-organizations-management-account', {
+      configRuleName: 'security-account-is-organizations-management-account',
+      inputParameters: {
+        check: 'security-account-is-organizations-management-account',
       },
       lambdaFunction: proberFunction,
       periodic: true,
