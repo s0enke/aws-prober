@@ -52,6 +52,13 @@ def handler(event, context):
             compliance_value = "COMPLIANT" if account_id == organization_management_account_id else "NON_COMPLIANT"
         except:
             compliance_value = "NON_COMPLIANT"
+    elif rule_parameters["check"] == "security-account-has-no-iam-users":
+        iam_client = boto3.client('iam')
+        iam_users = iam_client.list_users(MaxItems=1000)
+        if iam_users['Users']:
+            compliance_value = "NON_COMPLIANT"
+        else:
+            compliance_value = "COMPLIANT"
     else:
         raise
 

@@ -84,7 +84,7 @@ export class ProberStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(60),
     });
     proberFunction.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['compute-optimizer:GetEnrollmentStatus', 'organizations:DescribeAccount', 'organizations:DescribeOrganization'],
+      actions: ['compute-optimizer:GetEnrollmentStatus', 'organizations:DescribeAccount', 'organizations:DescribeOrganization', 'iam:ListUsers'],
       resources: ['*'],
       effect: iam.Effect.ALLOW
       })
@@ -151,6 +151,14 @@ export class ProberStack extends cdk.Stack {
       periodic: true,
     }).node.addDependency(configRecorderIfNotExists);
 
+    new config.CustomRule(this, 'prober-security-account-has-no-iam-users', {
+      configRuleName: 'prober-security-account-has-no-iam-users',
+      inputParameters: {
+        check: 'security-account-has-no-iam-users',
+      },
+      lambdaFunction: proberFunction,
+      periodic: true,
+    }).node.addDependency(configRecorderIfNotExists);
 
   }
 }
