@@ -1,14 +1,14 @@
-# Welcome to your CDK TypeScript project
+## Installation
 
-This is a blank project for CDK development with TypeScript.
+prober is installed via CloudFormation, which also provides a quick link. Prober is set up with 2-3 minutes, after that a CloudWatch dashboard shows the status of the AWS account.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## How does it work?
 
-## Useful commands
+prober is not yet another SaaS tool, but is installed directly into your AWS account, so you have complete control and visibilty.
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+prober utilizes the following AWS services and features:
+
+ - AWS Config Rules for checks and evaluation
+ - CloudWatch Dashboard as UI to display the checks and help
+ - CloudFormation for installation and updates
+
