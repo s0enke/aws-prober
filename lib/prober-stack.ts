@@ -84,7 +84,7 @@ export class ProberStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(60),
     });
     proberFunction.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['compute-optimizer:GetEnrollmentStatus', 'organizations:DescribeAccount', 'organizations:DescribeOrganization', 'iam:ListUsers'],
+      actions: ['compute-optimizer:GetEnrollmentStatus', 'organizations:DescribeAccount', 'organizations:DescribeOrganization', 'iam:ListUsers', 'budgets:ViewBudget'],
       resources: ['*'],
       effect: iam.Effect.ALLOW
       })
@@ -106,7 +106,7 @@ export class ProberStack extends cdk.Stack {
     });
     proberFunction.addEnvironment('AWS_API_LIB_ROLE', awsApiLibRole.roleArn);
 
-    for (let probeName of ['billing-invoice-by-email-enabled', 'billing-compute-optimizer-enabled', 'billing-iam-access-enabled', 'billing-tax-inheritance-enabled', 'security-account-is-organizations-management-account', 'security-account-has-no-iam-users']) {
+    for (let probeName of ['billing-invoice-by-email-enabled', 'billing-compute-optimizer-enabled', 'billing-iam-access-enabled', 'billing-tax-inheritance-enabled', 'billing-budget-created',  'security-account-is-organizations-management-account', 'security-account-has-no-iam-users']) {
       new config.CustomRule(this, `prober-${probeName}`, {
         configRuleName: `prober-${probeName}`,
         inputParameters: {
