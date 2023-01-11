@@ -142,8 +142,8 @@ export class ProberStack extends cdk.Stack {
       periodic: true,
     }).node.addDependency(configRecorderIfNotExists);
 
-    new config.CustomRule(this, 'security-account-is-organizations-management-account', {
-      configRuleName: 'security-account-is-organizations-management-account',
+    new config.CustomRule(this, 'prober-security-account-is-organizations-management-account', {
+      configRuleName: 'prober-security-account-is-organizations-management-account',
       inputParameters: {
         check: 'security-account-is-organizations-management-account',
       },
