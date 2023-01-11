@@ -37,7 +37,7 @@ def handler(event, context):
         co_client = boto3.client('compute-optimizer')
         co_enrollment_status = co_client.get_enrollment_status()["status"]
         compliance_value = "COMPLIANT" if co_enrollment_status == "Active" else "NON_COMPLIANT"
-    elif rule_parameters["check"] == "invoice-by-email":
+    elif rule_parameters["check"] == "billing-invoice-by-email-enabled":
         compliance_value = "COMPLIANT" if billing.preferences.pdf_invoice_by_mail else "NON_COMPLIANT"
     elif rule_parameters["check"] == "billing-iam-access-enabled":
         compliance_value = "COMPLIANT" if billing.iam_access else "NON_COMPLIANT"
