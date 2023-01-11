@@ -46,6 +46,11 @@ def handler(event, context):
     elif rule_parameters["check"] == "billing-budget-created":
         budgets_client = boto3.client('budgets')
         compliance_value = "COMPLIANT" if budgets_client.describe_budgets(AccountId=event['accountId'])['Budgets'] else "NON_COMPLIANT"
+    elif rule_parameters["check"] == "billing-cost-anomaly-detector-created":
+        # check whether a cost anomaly detector is already created
+        ce_client = boto3.client('ce')
+        compliance_value = "COMPLIANT" if ce_client.get_anomaly_monitors(MaxResults=1)['AnomalyMonitors'] else "NON_COMPLIANT"
+
     elif rule_parameters["check"] == "security-account-is-organizations-management-account":
         # check aws organization whether the account is the management account
         try:
