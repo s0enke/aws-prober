@@ -106,59 +106,15 @@ export class ProberStack extends cdk.Stack {
     });
     proberFunction.addEnvironment('AWS_API_LIB_ROLE', awsApiLibRole.roleArn);
 
-    new config.CustomRule(this, 'prober-billing-invoice-by-email-enabled', {
-      configRuleName: 'prober-billing-invoice-by-email-enabled',
-      inputParameters: {
-        check: 'invoice-by-email',
-      },
-      lambdaFunction: proberFunction,
-      periodic: true,
-    }).node.addDependency(configRecorderIfNotExists);
-
-    new config.CustomRule(this, 'prober-billing-compute-optimizer-enabled', {
-      configRuleName: 'prober-billing-compute-optimizer-enabled',
-      inputParameters: {
-        check: 'billing-compute-optimizer-enabled',
-      },
-      lambdaFunction: proberFunction,
-      periodic: true,
-    }).node.addDependency(configRecorderIfNotExists);
-
-    new config.CustomRule(this, 'prober-billing-iam-access-enabled', {
-      configRuleName: 'prober-billing-iam-access-enabled',
-      inputParameters: {
-        check: 'billing-iam-access-enabled',
-      },
-      lambdaFunction: proberFunction,
-      periodic: true,
-    }).node.addDependency(configRecorderIfNotExists);
-
-    new config.CustomRule(this, 'prober-billing-tax-inheritance-enabled', {
-      configRuleName: 'prober-billing-tax-inheritance-enabled',
-      inputParameters: {
-        check: 'billing-tax-inheritance-enabled',
-      },
-      lambdaFunction: proberFunction,
-      periodic: true,
-    }).node.addDependency(configRecorderIfNotExists);
-
-    new config.CustomRule(this, 'prober-security-account-is-organizations-management-account', {
-      configRuleName: 'prober-security-account-is-organizations-management-account',
-      inputParameters: {
-        check: 'security-account-is-organizations-management-account',
-      },
-      lambdaFunction: proberFunction,
-      periodic: true,
-    }).node.addDependency(configRecorderIfNotExists);
-
-    new config.CustomRule(this, 'prober-security-account-has-no-iam-users', {
-      configRuleName: 'prober-security-account-has-no-iam-users',
-      inputParameters: {
-        check: 'security-account-has-no-iam-users',
-      },
-      lambdaFunction: proberFunction,
-      periodic: true,
-    }).node.addDependency(configRecorderIfNotExists);
-
+    for (let probeName of ['billing-invoice-by-email-enabled', 'billing-compute-optimizer-enabled', 'billing-iam-access-enabled', 'billing-tax-inheritance-enabled', 'security-account-is-organizations-management-account', 'security-account-has-no-iam-users']) {
+      new config.CustomRule(this, `prober-${probeName}`, {
+        configRuleName: `prober-${probeName}`,
+        inputParameters: {
+          check: probeName,
+        },
+        lambdaFunction: proberFunction,
+        periodic: true,
+      }).node.addDependency(configRecorderIfNotExists);
+    }
   }
 }
