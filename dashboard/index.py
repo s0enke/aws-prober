@@ -65,6 +65,9 @@ CATEGORIES = {
 
 def handler(event, context):
 
+    if check_to_recheck := event.get('recheck'):
+        cfg.start_config_rules_evaluation(ConfigRuleNames=[check_to_recheck])
+
     html = ''
 
     for category, category_config in CATEGORIES.items():

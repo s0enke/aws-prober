@@ -129,7 +129,7 @@ export class ProberStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(60),
     });
     proberDashboardFunction.addToRolePolicy(new iam.PolicyStatement({
-        actions: ['config:Describe*'],
+        actions: ['config:Describe*', 'config:StartConfigRulesEvaluation'],
         resources: ['*'],
         effect: iam.Effect.ALLOW
       })
