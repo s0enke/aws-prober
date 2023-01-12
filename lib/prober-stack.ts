@@ -4,6 +4,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as lambda_python from '@aws-cdk/aws-lambda-python-alpha';
 import {Aws} from "aws-cdk-lib";
 
@@ -116,5 +117,32 @@ export class ProberStack extends cdk.Stack {
         periodic: true,
       }).node.addDependency(configRecorderIfNotExists);
     }
+
+
+    const proberDashboard = new cloudwatch.Dashboard(this, 'proberDashboard', {
+      dashboardName: "aws-prober"
+    });
+
+    const proberDashboardFunction =  new lambda_python.PythonFunction(this, 'proberDashboardFunction', {
+      entry: 'dashboard/',
+      runtime: lambda.Runtime.PYTHON_3_9,
+      timeout: cdk.Duration.seconds(60),
+    });
+    proberDashboardFunction.addToRolePolicy(new iam.PolicyStatement({
+        actions: ['config:Describe*'],
+        resources: ['*'],
+        effect: iam.Effect.ALLOW
+      })
+    );
+
+    // Create a custom widget for the dashboard
+    const customWidget = new cloudwatch.CustomWidget({
+      functionArn: proberDashboardFunction.functionArn,
+      title: '',
+      width: 24,
+      height: 40,
+    });
+
+    proberDashboard.addWidgets(customWidget);
   }
 }
