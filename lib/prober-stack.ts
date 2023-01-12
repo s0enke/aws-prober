@@ -75,7 +75,7 @@ export class ProberStack extends cdk.Stack {
     }).node.addDependency(configRecorderIfNotExists);
 
     new config.ManagedRule(this, 'prober-security-iam-root-access-key-check', {
-      configRuleName: 'prober-iam-root-access-key-check',
+      configRuleName: 'prober-security-iam-root-access-key-check',
       identifier: 'IAM_ROOT_ACCESS_KEY_CHECK',
     }).node.addDependency(configRecorderIfNotExists);
 
