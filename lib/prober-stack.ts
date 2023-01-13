@@ -86,6 +86,7 @@ export class ProberStack extends cdk.Stack {
           parameters: {
             ConfigurationRecorderName: "prober",
           },
+          ignoreErrorCodesMatching: "NoSuchConfigurationRecorder", // ignore if none has been created
         },
         installLatestAwsSdk: false,
       }
