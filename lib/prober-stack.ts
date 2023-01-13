@@ -41,8 +41,14 @@ export class ProberStack extends cdk.Stack {
       {
         policy: cr.AwsCustomResourcePolicy.fromStatements([
           new iam.PolicyStatement({
+            actions: ["iam:PassRole"],
+            resources: [
+              `arn:aws:iam::${Aws.ACCOUNT_ID}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig`,
+            ],
+            effect: iam.Effect.ALLOW,
+          }),
+          new iam.PolicyStatement({
             actions: [
-              "iam:PassRole",
               "config:PutConfigurationRecorder",
               "config:DeleteConfigurationRecorder",
             ],
