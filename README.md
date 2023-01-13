@@ -44,7 +44,11 @@ visibility.
 
 ## Usage
 
-Read the checks, and make them "green" with the help of the linked resources.
+Go to the [aws-prober CloudWatch dashboard in your AWS account](https://console.aws.amazon.com/cloudwatch/home?#dashboards:name=aws-prober)
+
+Tou may have to confirm to run the aws-prober Lambda function. This is a security measure by the Cloudwatch service.
+
+Now Read the through checks, and make the "red" ones "green" with the help of the linked resources.
 
 ## Uninstallation
 
