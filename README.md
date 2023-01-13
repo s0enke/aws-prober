@@ -61,6 +61,12 @@ You can seamlessly request my commerical support via [AWS IQ](https://iq.aws.ama
 
 ## FAQ
 
+### How much does it cost?
+
+aws-prober itself is free. It sets up some AWS resources, such as a CloudWatch dashboard, AWS Config Rules, and AWS Lambda functions. The current AWS free tier includes 3 free CloudWatch dashboards, and many AWS Lambda invocations. The installed AWS Config Rules incur a small fee, which is usually below one cent/$month.
+
+It's also safe to uninstall aws-prober after checking and fixing the AWS account.
+
 ### How does it work?
 
 prober utilizes the following AWS services and features:
