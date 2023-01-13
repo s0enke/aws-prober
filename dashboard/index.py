@@ -138,7 +138,7 @@ it</a>
 """
             html += f"""
 <a class="btn btn-primary">Recheck</a>
-<cwdb-action action="call" endpoint="{context.invoked_function_arn}" confirmation="message"> 
+<cwdb-action action="call" endpoint="{context.invoked_function_arn}" confirmation="the recheck takes up to 2 minutes">
    {{ "recheck": "{rule["ConfigRuleName"]}" }}
 </cwdb-action> 
 </p>
