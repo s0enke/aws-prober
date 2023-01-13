@@ -64,7 +64,7 @@ CATEGORIES = {
                 "title": "AWS Budget created",
                 "description": "Creating a budget and set alerts for when your bill is about to exceed a certain "
                                "threshold. To get a more accurate understanding of your spending, make sure to "
-                               "include AWS credits in the settings so that you notice credit burning. Additionally, "
+                               "exclude AWS credits in the settings so that you notice credit burning. Additionally, "
                                "it's a good idea to enable the auto-adjustment feature, which will automatically "
                                "update the budget as your actual bill changes over time.",
                 "docs": "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-create.html",
