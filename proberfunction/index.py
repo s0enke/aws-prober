@@ -1,7 +1,8 @@
-import boto3
 import json
-from awsapilib import Billing
 import os
+
+import boto3
+from awsapilib import Billing
 
 billing = Billing(os.environ['AWS_API_LIB_ROLE'])
 
@@ -14,7 +15,8 @@ def build_evaluation(resource_id, compliance_type, event, resource_type=DEFAULT_
     resource_id -- the unique id of the resource to report
     compliance_type -- either COMPLIANT, NON_COMPLIANT or NOT_APPLICABLE
     event -- the event variable given in the lambda handler
-    resource_type -- the CloudFormation resource type (or AWS::::Account) to report on the rule (default DEFAULT_RESOURCE_TYPE)
+    resource_type -- the CloudFormation resource type (or AWS::::Account) to report on the rule (default
+    DEFAULT_RESOURCE_TYPE)
     annotation -- an annotation to be added to the evaluation (default None)
     """
     eval_cc = {}
