@@ -30,6 +30,7 @@ export class ProberStack extends cdk.Stack {
           },
           ignoreErrorCodesMatching: "InvalidInput", // ignore if already created
         },
+        installLatestAwsSdk: false,
       }
     );
 
@@ -80,6 +81,7 @@ export class ProberStack extends cdk.Stack {
             ConfigurationRecorderName: "prober",
           },
         },
+        installLatestAwsSdk: false,
       }
     );
     configRecorderIfNotExists.node.addDependency(
