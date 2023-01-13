@@ -1,4 +1,5 @@
 import * as cdk from "aws-cdk-lib";
+import { Aws } from "aws-cdk-lib";
 import * as config from "aws-cdk-lib/aws-config";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as cr from "aws-cdk-lib/custom-resources";
@@ -6,7 +7,6 @@ import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as lambda_python from "@aws-cdk/aws-lambda-python-alpha";
-import { Aws } from "aws-cdk-lib";
 
 export class ProberStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
