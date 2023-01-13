@@ -126,7 +126,7 @@ export class ProberStack extends cdk.Stack {
         account: new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
-              actions: ["*"], // FIXME: least privilege
+              actions: ["tax:Get*", "billing:Get*", "aws-portal:View*"],
               resources: ["*"],
               effect: iam.Effect.ALLOW,
             }),
