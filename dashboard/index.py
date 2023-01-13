@@ -84,7 +84,7 @@ CATEGORIES = {
                                "unexpected increases in your AWS bill. By enabling this feature, you can set up "
                                "alerts and notifications to be triggered when an anomaly is detected, giving you a "
                                "head start in identifying and addressing the issue.",
-                "docs": "",
+                "docs": "https://docs.aws.amazon.com/cost-management/latest/userguide/settingup-ad.html",
             },
             "prober-billing-compute-optimizer-enabled": {
                 "title": "AWS Compute Optimizer enabled",
