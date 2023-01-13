@@ -114,17 +114,24 @@ def handler(event, context):
             "ComplianceByConfigRules"]
 
         for rule in rules:
-            compliant = rule["Compliance"]["ComplianceType"] == 'COMPLIANT'
+            compliance_type = rule["Compliance"]["ComplianceType"]
+
+            if compliance_type == "COMPLIANT":
+                symbol = "✅"
+            elif compliance_type == "NON_COMPLIANT":
+                symbol = "❌"
+            else:
+                symbol = "🤔"
 
             html += f"""
-<h3 style="margin-top: 20px">{"✅" if compliant else "❌"} 
+<h3 style="margin-top: 20px">{symbol}
 {CATEGORIES[category]["rules"][rule["ConfigRuleName"]]["title"]}</h3>
 <p>{CATEGORIES[category]["rules"][rule["ConfigRuleName"]]["description"]}</p>
 
 <p>
 """
 
-            if not compliant:
+            if compliance_type == "NON_COMPLIANT":
                 html += f"""
 <a class="btn btn-primary" href="{CATEGORIES[category]["rules"][rule["ConfigRuleName"]]["docs"]}" target="_blank">Fix 
 it</a>
