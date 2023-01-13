@@ -26,8 +26,8 @@ def build_evaluation(resource_id, compliance_type, event, resource_type=DEFAULT_
     eval_cc['OrderingTimestamp'] = str(json.loads(event['invokingEvent'])['notificationCreationTime'])
     return eval_cc
 
-def handler(event, context):
 
+def handler(event, context):
     evaluations = []
     rule_parameters = json.loads(event['ruleParameters'])
 
@@ -45,18 +45,21 @@ def handler(event, context):
         compliance_value = "COMPLIANT" if billing.tax.inheritance else "NON_COMPLIANT"
     elif rule_parameters["check"] == "billing-budget-created":
         budgets_client = boto3.client('budgets')
-        compliance_value = "COMPLIANT" if budgets_client.describe_budgets(AccountId=event['accountId'])['Budgets'] else "NON_COMPLIANT"
+        compliance_value = "COMPLIANT" if budgets_client.describe_budgets(AccountId=event['accountId'])[
+            'Budgets'] else "NON_COMPLIANT"
     elif rule_parameters["check"] == "billing-cost-anomaly-detector-created":
         # check whether a cost anomaly detector is already created
         ce_client = boto3.client('ce')
-        compliance_value = "COMPLIANT" if ce_client.get_anomaly_monitors(MaxResults=1)['AnomalyMonitors'] else "NON_COMPLIANT"
+        compliance_value = "COMPLIANT" if ce_client.get_anomaly_monitors(MaxResults=1)[
+            'AnomalyMonitors'] else "NON_COMPLIANT"
 
     elif rule_parameters["check"] == "security-account-is-organizations-management-account":
         # check aws organization whether the account is the management account
         try:
             organizations_client = boto3.client('organizations')
             account_id = organizations_client.describe_account(AccountId=event['accountId'])['Account']['Id']
-            organization_management_account_id = organizations_client.describe_organization()['Organization']['MasterAccountId']
+            organization_management_account_id = organizations_client.describe_organization()['Organization'][
+                'MasterAccountId']
             compliance_value = "COMPLIANT" if account_id == organization_management_account_id else "NON_COMPLIANT"
         except:
             compliance_value = "NON_COMPLIANT"
@@ -70,5 +73,6 @@ def handler(event, context):
     else:
         raise
 
-    evaluations.append(build_evaluation(event['accountId'], compliance_value, event, resource_type=DEFAULT_RESOURCE_TYPE))
+    evaluations.append(
+        build_evaluation(event['accountId'], compliance_value, event, resource_type=DEFAULT_RESOURCE_TYPE))
     AWS_CONFIG_CLIENT.put_evaluations(Evaluations=evaluations, ResultToken=event['resultToken'])
