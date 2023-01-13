@@ -11,4 +11,6 @@ new ProberStack(app, "ProberStack", {
     fileAssetsBucketName: process.env.FILE_ASSETS_BUCKET_NAME ?? undefined,
     bucketPrefix: process.env.FILE_ASSETS_BUCKET_PREFIX ?? undefined,
   }),
+  description:
+    "aws-prober - check your AWS account for foundational best practices - https://github.com/s0enke/aws-prober",
 });
