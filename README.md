@@ -50,7 +50,7 @@ Read the checks, and make them "green" with the help of the linked resources.
 
 You can seamlessly uninstall aws-prober: Delete the `aws-prober` CloudFormation stack. CloudFormation takes care of cleaning up all aws-prober resources.
 
-## Commerical help and support
+## Commercial help and support
 
 You can seamlessly request my commerical support via [AWS IQ](https://iq.aws.amazon.com/e/soenke).
 
