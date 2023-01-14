@@ -82,8 +82,9 @@ prober utilizes the following AWS services and features:
 
 The AWS CDK is used for development.
 
-## Does aws-prober work with existing AWS environments?
- Yes. aws-prober is designed to be safely deployed into new and existing AWS environments. Uninstalling aws-prober is also non-invasive.
+### Does aws-prober work with existing AWS environments?
+
+Yes. aws-prober is designed to be safely deployed into new and existing AWS environments. Uninstalling aws-prober is also non-invasive.
 
 ### Does aws-prober automatically set up the best practices?
 
