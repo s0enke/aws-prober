@@ -1,113 +1,37 @@
 import * as cdk from "aws-cdk-lib";
-import { Aws } from "aws-cdk-lib";
-import * as config from "aws-cdk-lib/aws-config";
+import { Aws, aws_scheduler } from "aws-cdk-lib";
 import * as iam from "aws-cdk-lib/aws-iam";
-import * as cr from "aws-cdk-lib/custom-resources";
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as sfn from "aws-cdk-lib/aws-stepfunctions";
+import { JsonPath } from "aws-cdk-lib/aws-stepfunctions";
+import * as sfn_tasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as lambda_python from "@aws-cdk/aws-lambda-python-alpha";
 
 export class ProberStack extends cdk.Stack {
+  private readonly checksWithLambdaBackend = [
+    "billing-invoice-by-email-enabled",
+    "billing-compute-optimizer-enabled",
+    "billing-iam-access-enabled",
+    "billing-tax-inheritance-enabled",
+    "billing-budget-created",
+    "billing-cost-anomaly-detector-created",
+    "security-account-is-organizations-management-account",
+    "security-account-has-no-iam-users",
+  ];
+
+  private readonly allChecks = this.checksWithLambdaBackend.concat([
+    "security-iam-root-access-key-check",
+    "security-root-account-mfa-enabled",
+  ]);
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const serviceLinkedRoleForAwsConfigIfNotExists = new cr.AwsCustomResource(
-      this,
-      "ServiceLinkedRoleForAwsConfigIfNotExists",
-      {
-        policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
-          resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
-        }),
-        onCreate: {
-          action: "createServiceLinkedRole",
-          service: "IAM",
-          physicalResourceId: cr.PhysicalResourceId.of(
-            "ServiceLinkedRoleForAwsConfig"
-          ),
-          parameters: {
-            AWSServiceName: "config.amazonaws.com",
-          },
-          ignoreErrorCodesMatching: "InvalidInput", // ignore if already created
-        },
-        installLatestAwsSdk: false,
-      }
-    );
-
-    // AWS config rules need a recorder to work, so create a dummy recorder with minimum costs if none exists
-    const configRecorderIfNotExists = new cr.AwsCustomResource(
-      this,
-      "ConfigRecorderIfNotExists",
-      {
-        policy: cr.AwsCustomResourcePolicy.fromStatements([
-          new iam.PolicyStatement({
-            actions: ["iam:PassRole"],
-            resources: [
-              `arn:aws:iam::${Aws.ACCOUNT_ID}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig`,
-            ],
-            effect: iam.Effect.ALLOW,
-          }),
-          new iam.PolicyStatement({
-            actions: [
-              "config:PutConfigurationRecorder",
-              "config:DeleteConfigurationRecorder",
-            ],
-            resources: ["*"],
-            effect: iam.Effect.ALLOW,
-          }),
-        ]),
-        onCreate: {
-          action: "putConfigurationRecorder",
-          service: "ConfigService",
-          physicalResourceId: cr.PhysicalResourceId.of(
-            "ConfigRecorderIfNotExists"
-          ),
-          parameters: {
-            ConfigurationRecorder: {
-              name: "prober",
-              recordingGroup: {
-                allSupported: false,
-                includeGlobalResourceTypes: false,
-                resourceTypes: [
-                  "Datadog::SLOs::SLO", // some dummy resource type nobody uses
-                ],
-              },
-              roleARN: `arn:aws:iam::${Aws.ACCOUNT_ID}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig`,
-            },
-          },
-          ignoreErrorCodesMatching: "MaxNumberOfConfigurationRecordersExceeded", // ignore if already created
-        },
-        onDelete: {
-          action: "deleteConfigurationRecorder",
-          service: "ConfigService",
-          physicalResourceId: cr.PhysicalResourceId.of(
-            "ConfigRecorderIfNotExists"
-          ),
-          parameters: {
-            ConfigurationRecorderName: "prober",
-          },
-          ignoreErrorCodesMatching: "NoSuchConfigurationRecorder", // ignore if none has been created
-        },
-        installLatestAwsSdk: false,
-      }
-    );
-    configRecorderIfNotExists.node.addDependency(
-      serviceLinkedRoleForAwsConfigIfNotExists
-    );
-
-    new config.ManagedRule(this, "prober-security-root-account-mfa-enabled", {
-      configRuleName: "prober-security-root-account-mfa-enabled",
-      identifier: "ROOT_ACCOUNT_MFA_ENABLED",
-    }).node.addDependency(configRecorderIfNotExists);
-
-    new config.ManagedRule(this, "prober-security-iam-root-access-key-check", {
-      configRuleName: "prober-security-iam-root-access-key-check",
-      identifier: "IAM_ROOT_ACCESS_KEY_CHECK",
-    }).node.addDependency(configRecorderIfNotExists);
-
     const proberFunction = new lambda_python.PythonFunction(
       this,
-      "ProberFunction",
+      "proberFunction",
       {
         entry: "proberfunction/",
         runtime: lambda.Runtime.PYTHON_3_9,
@@ -145,24 +69,23 @@ export class ProberStack extends cdk.Stack {
     });
     proberFunction.addEnvironment("AWS_API_LIB_ROLE", awsApiLibRole.roleArn);
 
-    for (let probeName of [
-      "billing-invoice-by-email-enabled",
-      "billing-compute-optimizer-enabled",
-      "billing-iam-access-enabled",
-      "billing-tax-inheritance-enabled",
-      "billing-budget-created",
-      "billing-cost-anomaly-detector-created",
-      "security-account-is-organizations-management-account",
-      "security-account-has-no-iam-users",
-    ]) {
-      new config.CustomRule(this, `prober-${probeName}`, {
-        configRuleName: `prober-${probeName}`,
-        inputParameters: {
-          check: probeName,
-        },
-        lambdaFunction: proberFunction,
-        periodic: true,
-      }).node.addDependency(configRecorderIfNotExists);
+    let current: any;
+    current = new sfn.Parallel(this, "All jobs");
+
+    for (const probeName of this.checksWithLambdaBackend) {
+      current = current.branch(
+        new sfn_tasks.LambdaInvoke(this, `prober-${probeName}-invoke`, {
+          lambdaFunction: proberFunction,
+          payload: sfn.TaskInput.fromObject({
+            check: probeName,
+          }),
+        }).next(
+          this.persistProberCheck(
+            probeName,
+            JsonPath.format("{}", JsonPath.stringAt("$.Payload.compliance"))
+          )
+        )
+      );
     }
 
     const proberDashboard = new cloudwatch.Dashboard(this, "proberDashboard", {
@@ -180,8 +103,10 @@ export class ProberStack extends cdk.Stack {
     );
     proberDashboardFunction.addToRolePolicy(
       new iam.PolicyStatement({
-        actions: ["config:Describe*", "config:StartConfigRulesEvaluation"],
-        resources: ["*"],
+        actions: ["ssm:GetParameter"],
+        resources: [
+          `arn:${Aws.PARTITION}:ssm:${Aws.REGION}:${Aws.ACCOUNT_ID}:parameter/prober/*`,
+        ],
         effect: iam.Effect.ALLOW,
       })
     );
@@ -195,5 +120,113 @@ export class ProberStack extends cdk.Stack {
     });
 
     proberDashboard.addWidgets(customWidget);
+
+    this.addCheckEvictions();
+
+    const getAccountSummaryStep = new sfn_tasks.CallAwsService(
+      this,
+      "getAccountSummary",
+      {
+        iamResources: ["*"],
+        service: "IAM",
+        action: "getAccountSummary",
+        outputPath: "$.SummaryMap",
+      }
+    );
+    current
+      .next(getAccountSummaryStep)
+      .next(
+        this.persistProberCheck(
+          "security-root-account-mfa-enabled",
+          JsonPath.format("{}", JsonPath.stringAt("$.AccountMFAEnabled"))
+        )
+      )
+      .next(
+        this.persistProberCheck(
+          "security-iam-root-access-key-check",
+          JsonPath.format("{}", JsonPath.stringAt("$.AccountAccessKeysPresent"))
+        )
+      );
+
+    const proberStateMachine = new sfn.StateMachine(
+      this,
+      "proberStateMachine",
+      {
+        definition: current,
+        timeout: cdk.Duration.minutes(1),
+      }
+    );
+
+    proberDashboardFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["states:StartExecution"],
+        resources: [proberStateMachine.stateMachineArn],
+        effect: iam.Effect.ALLOW,
+      })
+    );
+    proberDashboardFunction.addEnvironment(
+      "PROBER_STATE_MACHINE_ARN",
+      proberStateMachine.stateMachineArn
+    );
+  }
+
+  private persistProberCheck(
+    check: string,
+    value: string
+  ): sfn_tasks.CallAwsService {
+    // write output to SSM parameter
+    return new sfn_tasks.CallAwsService(this, `persistParameter${check}`, {
+      iamResources: [
+        `arn:${Aws.PARTITION}:ssm:${Aws.REGION}:${Aws.ACCOUNT_ID}:parameter/prober/*`,
+      ],
+      service: "SSM",
+      action: "putParameter",
+      parameters: {
+        Name: "/prober/" + check,
+        Value: value,
+        Type: "String",
+        Overwrite: true,
+      },
+      resultPath: JsonPath.DISCARD,
+    });
+  }
+
+  private addCheckEvictions() {
+    // evict check results every 24 hours
+    // this could also be done with dynamic SSM parameters and a Expiration date
+    // but currently Step Functions is not capable of calculating dates,
+    // so we use a simple scheduler instead
+    const checkEvictionRole = new iam.Role(this, "checkEvictionRole", {
+      assumedBy: new iam.ServicePrincipal("scheduler.amazonaws.com"),
+      inlinePolicies: {
+        account: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              actions: ["ssm:DeleteParameter"],
+              resources: [
+                `arn:${Aws.PARTITION}:ssm:${Aws.REGION}:${Aws.ACCOUNT_ID}:parameter/prober/*`,
+              ],
+              effect: iam.Effect.ALLOW,
+            }),
+          ],
+        }),
+      },
+    });
+    for (const check of this.allChecks) {
+      new aws_scheduler.CfnSchedule(this, `evictCheck${check}`, {
+        scheduleExpression: "rate(1 day)",
+        flexibleTimeWindow: {
+          mode: "FLEXIBLE",
+          maximumWindowInMinutes: 1440, // maximum jitter
+        },
+        target: {
+          arn: "arn:aws:scheduler:::aws-sdk:ssm:deleteParameter",
+          roleArn: checkEvictionRole.roleArn,
+          input: JSON.stringify({
+            Name: `/prober/${check}`,
+          }),
+        },
+      });
+    }
   }
 }

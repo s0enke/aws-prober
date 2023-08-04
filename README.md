@@ -67,7 +67,7 @@ You can seamlessly request my commerical support via [AWS IQ](https://iq.aws.ama
 
 ### How much does it cost?
 
-aws-prober itself is free. It sets up some AWS resources, such as a CloudWatch dashboard, AWS Config Rules, and AWS Lambda functions. The current AWS free tier includes 3 free CloudWatch dashboards, and many AWS Lambda invocations. The installed AWS Config Rules incur a small fee, which is usually below one cent/$month.
+aws-prober itself is free. It sets up some AWS resources, such as a CloudWatch dashboard, Step Functions, and AWS Lambda functions. The current AWS free tier includes 3 free CloudWatch dashboards, and many Step Functions / AWS Lambda invocations. So aws-prober should run within the Free Tier for most AWS accounts.
 
 It's also safe to uninstall aws-prober after checking and fixing the AWS account.
 
@@ -75,7 +75,7 @@ It's also safe to uninstall aws-prober after checking and fixing the AWS account
 
 prober utilizes the following AWS services and features:
 
-- AWS Config Rules for checks and evaluation
+- Step Functions, AWS Lambda, and SSM Parameter Store for the checks
 - CloudWatch Dashboard as UI to display the checks and help
 - CloudFormation for installation and updates
 - Third party awsapilib for AWS features which are not exposed via API 
@@ -104,7 +104,7 @@ Currently, there are no automatic updates. You can update aws-prober via CloudFo
 
 ### Does aws-prober emit events, e.g. for ChatBots?
 
-aws-prober utilizes AWS Config Rules, which emit EventBridge events on state change. Bots and monitoring solutions, such as AWS ChatBot or Systems Manager OpsCenter, can react to these events.
+aws-prober utilizes AWS Systems Manager Parameter Store parameters, which emit EventBridge events on state change. Bots and monitoring solutions, such as AWS ChatBot or Systems Manager OpsCenter, can react to these events.
 
 ### Is there a commercial variant?
 
